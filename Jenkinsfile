@@ -15,16 +15,31 @@ pipeline {
             }
         }
 
+        stage('Check Branch') {
+            steps {
+                script {
+                    env.GIT_BRANCH_NAME = sh(
+                        script: "git rev-parse --abbrev-ref HEAD",
+                        returnStdout: true
+                    ).trim()
+
+                    echo "Current Branch: ${env.GIT_BRANCH_NAME}"
+                }
+            }
+        }
+
         stage('Build Docker Image') {
             steps {
-                sh 'docker build -t $IMAGE_NAME .'
+                sh "docker build -t ${IMAGE_NAME} ."
             }
         }
 
         stage('Push to DEV Repository') {
 
             when {
-                branch 'dev'
+                expression {
+                    env.GIT_BRANCH_NAME == "dev"
+                }
             }
 
             steps {
@@ -36,15 +51,15 @@ pipeline {
                     )
                 ]) {
 
-                    sh '''
-                    echo $PASS | docker login -u $USER --password-stdin
+                    sh """
+                    echo \$PASS | docker login -u \$USER --password-stdin
 
-                    docker tag $IMAGE_NAME \
-                    iswaryasundaramoorthy/dev:latest
+                    docker tag ${IMAGE_NAME} \
+                    ${DOCKER_USERNAME}/dev:latest
 
                     docker push \
-                    iswaryasundaramoorthy/dev:latest
-                    '''
+                    ${DOCKER_USERNAME}/dev:latest
+                    """
                 }
             }
         }
@@ -52,7 +67,9 @@ pipeline {
         stage('Push to PROD Repository') {
 
             when {
-                branch 'main'
+                expression {
+                    env.GIT_BRANCH_NAME == "main"
+                }
             }
 
             steps {
@@ -64,15 +81,15 @@ pipeline {
                     )
                 ]) {
 
-                    sh '''
-                    echo $PASS | docker login -u $USER --password-stdin
+                    sh """
+                    echo \$PASS | docker login -u \$USER --password-stdin
 
-                    docker tag $IMAGE_NAME \
-                    iswaryasundaramoorthy/prod:latest
+                    docker tag ${IMAGE_NAME} \
+                    ${DOCKER_USERNAME}/prod:latest
 
                     docker push \
-                    iswaryasundaramoorthy/prod:latest
-                    '''
+                    ${DOCKER_USERNAME}/prod:latest
+                    """
                 }
             }
         }
