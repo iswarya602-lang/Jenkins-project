@@ -18,12 +18,8 @@ pipeline {
         stage('Check Branch') {
             steps {
                 script {
-                    env.GIT_BRANCH_NAME = sh(
-                        script: "git rev-parse --abbrev-ref HEAD",
-                        returnStdout: true
-                    ).trim()
-
-                    echo "Current Branch: ${env.GIT_BRANCH_NAME}"
+                    echo "BRANCH_NAME = ${env.BRANCH_NAME}"
+                    echo "GIT_BRANCH = ${env.GIT_BRANCH}"
                 }
             }
         }
@@ -38,7 +34,7 @@ pipeline {
 
             when {
                 expression {
-                    env.GIT_BRANCH_NAME == "dev"
+                    return env.GIT_BRANCH?.contains('dev')
                 }
             }
 
@@ -68,7 +64,7 @@ pipeline {
 
             when {
                 expression {
-                    env.GIT_BRANCH_NAME == "main"
+                    return env.GIT_BRANCH?.contains('main')
                 }
             }
 
